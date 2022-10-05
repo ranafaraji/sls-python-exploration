@@ -1,0 +1,25 @@
+service: sls-python-layer
+
+
+provider:
+  name: aws
+  runtime: python3.9
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  deploymentBucket: 
+    name: ${param:deploymentBucketName}
+
+params:
+  dev:
+    deploymentBucketName: s3-learning-rana # Do not change deploymentBuketName value!!!
+    logRetentionInDays: 7
+    memorySize: 128
+    timeout: 15
+
+layers:
+  sls-python:
+    name: ${self:provider.stage}-sls-python
+    path: layers/sls-python-layer
+    compatibleRuntimes:
+      - python3.9
+    retain: true

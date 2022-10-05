@@ -19,6 +19,9 @@ lib64/
 parts/
 sdist/
 var/
+venv/
+node_modules/
+layers/sls-python-layer/python/lib/python3.9/site-packages/**
 wheels/
 pip-wheel-metadata/
 share/python-wheels/

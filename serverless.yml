@@ -1,0 +1,114 @@
+service: sls-python
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  deploymentBucket: 
+    name: ${param:deploymentBucketName}
+
+params:
+  dev:
+    moduleLayer: "arn:aws:lambda:${aws:region}:${aws:accountId}:layer:${self:provider.stage}-sls-python:latest"
+
+package:
+  # serverless-python-requirements settings
+  individually: true
+  patterns:
+    - '!./**'
+
+custom:
+  # serverless-python-requirements settings
+  pythonRequirements:
+    slim: true
+
+functions:
+  hello:
+    handler: handler.hello
+    package: 
+      patterns:
+        - 'handler.py'
+    layers:
+      - ${param:moduleLayer}
+    events:
+      - httpApi:
+          path: /initial_api
+          method: get
+
+  create_item:
+    handler: create_item.hello
+    layers:
+      - ${param:moduleLayer}
+    package: 
+      patterns:
+        - 'create_item.py'
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action: 
+          - dynamodb:PutItem
+        Resource: "arn:aws:dynamodb:us-east-1:353569072725:table/usersTable"
+    events:
+      - http:
+          path: /create_item
+          method: post
+          cors: true
+
+  update_lambda:
+    handler: update_lambda.handler
+    layers:
+      - ${param:moduleLayer}
+    package: 
+      patterns:
+        - 'update_lambda.py'
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action: 
+          - dynamodb:UpdateItem
+        Resource: "arn:aws:dynamodb:us-east-1:353569072725:table/usersTable"
+    events:
+      - httpApi:
+          path: /update_item
+          method: put
+
+  delete_lambda:
+    handler: delete_lambda.handler
+    layers:
+      - ${param:moduleLayer}
+    package: 
+      patterns:
+        - 'delete_lambda.py'
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action: 
+          - dynamodb:DeleteItem
+        Resource: "arn:aws:dynamodb:us-east-1:353569072725:table/usersTable"
+    events:
+      - httpApi:
+          path: /delete_item
+          method: delete
+
+  retrive-info:
+    handler: retrive-info.handler
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action: 
+          - dynamodb:GetItem
+        Resource: "arn:aws:dynamodb:us-east-1:353569072725:table/usersTable"
+    layers:
+      - ${param:moduleLayer}
+    package: 
+      patterns:
+        - 'retrive-info.py'
+    events:
+      - httpApi:
+          path: /get_item/{front-end}
+          method: get
+
+   
+plugins:
+  - serverless-python-requirements
+  - serverless-iam-roles-per-function
+  - serverless-latest-layer-version
+
